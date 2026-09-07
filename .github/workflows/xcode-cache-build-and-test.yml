@@ -58,6 +58,25 @@ jobs:
           xcodebuild -version
           defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
 
+      - name: Create PreviewTests simulator
+        if: ${{ matrix.suite.scheme == 'PreviewTests' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DEVICE_NAME="iPhone SE (3rd generation)"
+          DEVICE_TYPE="com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation"
+          RUNTIME="com.apple.CoreSimulator.SimRuntime.iOS-26-5"
+
+          if ! xcrun simctl list devices "iOS 26.5" available | grep -Fq "$DEVICE_NAME ("; then
+            echo "Creating $DEVICE_NAME"
+            xcrun simctl create "$DEVICE_NAME" "$DEVICE_TYPE" "$RUNTIME"
+          else
+            echo "$DEVICE_NAME already exists"
+          fi
+
+          xcrun simctl list devices "iOS 26.5" available
+
       - name: Install xcodecacheprog
         run: ./.github/scripts/install-xcodecacheprog.sh
 
