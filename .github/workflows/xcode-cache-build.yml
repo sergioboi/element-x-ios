@@ -34,13 +34,15 @@ jobs:
         suite:
           - scheme: UnitTests
             test_plan: UnitTests
+            destination: 'platform=iOS Simulator,name=iPhone 17,OS=26.5,arch=arm64'
           - scheme: PreviewTests
             test_plan: PreviewTests
+            destination: 'platform=iOS Simulator,name=iPhone SE (3rd generation),OS=26.5,arch=arm64'
     env:
       ELEMENT_CACHE_MODE: ${{ inputs.cache_mode }}
       ELEMENT_SCHEME: ${{ matrix.suite.scheme }}
       ELEMENT_TEST_PLAN: ${{ matrix.suite.test_plan }}
-      ELEMENT_DESTINATION: platform=iOS Simulator,name=iPhone 17,OS=26.5,arch=arm64
+      ELEMENT_DESTINATION: ${{ matrix.suite.destination }}
 
     steps:
       - uses: nschloe/action-cached-lfs-checkout@385a8ecc719e50b8c71af6ab01a624b486b7c3bc # v1.2.5
