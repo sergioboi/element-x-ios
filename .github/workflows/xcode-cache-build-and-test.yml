@@ -7,15 +7,9 @@ on:
         description: Cache mode to use
         type: choice
         required: true
-        default: local
+        default: remote
         options:
-          - local
           - remote
-      clear_local_cache_dir:
-        description: Clear the local CAS cache before the cached build
-        type: boolean
-        required: true
-        default: true
 
 permissions:
   contents: read
@@ -58,10 +52,6 @@ jobs:
       - name: Install xcodecacheprog
         run: ./.github/scripts/install-xcodecacheprog.sh
 
-      - name: Install CASBuildCache
-        if: ${{ inputs.cache_mode == 'local' }}
-        run: ./.github/scripts/install-cas-build-cache.sh
-
       - name: Validate cache setup
         run: ./.github/scripts/check-element-xcode-cache-setup.sh --cache-mode "$ELEMENT_CACHE_MODE"
 
@@ -87,10 +77,6 @@ jobs:
         env:
           ELEMENT_RESULT_BUNDLE_PATH: ${{ runner.temp }}/element-${{ matrix.suite.scheme }}-xcodebuild.xcresult
         run: ./.github/scripts/run-element-test-without-building.sh
-
-      - name: Clear local CAS cache before cached build
-        if: ${{ inputs.cache_mode == 'local' && inputs.clear_local_cache_dir }}
-        run: ./.github/scripts/clean-element-xcode-cache.sh
 
       - name: Remove local build state
         run: ./.github/scripts/clean-element-derived-data.sh

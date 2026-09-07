@@ -7,15 +7,9 @@ on:
         description: Cache mode to use
         type: choice
         required: true
-        default: local
+        default: remote
         options:
-          - local
           - remote
-      clear_local_cache_dir:
-        description: Clear the local CAS cache before the first cached build
-        type: boolean
-        required: true
-        default: true
 
 permissions:
   contents: read
@@ -80,10 +74,6 @@ jobs:
       - name: Install xcodecacheprog
         run: ./.github/scripts/install-xcodecacheprog.sh
 
-      - name: Install CASBuildCache
-        if: ${{ inputs.cache_mode == 'local' }}
-        run: ./.github/scripts/install-cas-build-cache.sh
-
       - name: Validate cache setup
         run: ./.github/scripts/check-element-xcode-cache-setup.sh --cache-mode "$ELEMENT_CACHE_MODE"
 
@@ -96,23 +86,19 @@ jobs:
         run: |
           ./.github/scripts/run-element-build-for-testing.sh
 
-      - name: Clear local CAS cache before first cached build
-        if: ${{ inputs.cache_mode == 'local' && inputs.clear_local_cache_dir }}
-        run: ./.github/scripts/clean-element-xcode-cache.sh
+      - name: Remove local build state
+        run: ./.github/scripts/clean-element-derived-data.sh
+
+      - name: build-for-testing without cache again
+        env:
+          XCODE_XCCONFIG_FILE: ${{ github.workspace }}/.github/support/XcodeNoCache.xcconfig
+        run: |
+          ./.github/scripts/run-element-build-for-testing.sh
 
       - name: Remove local build state
         run: ./.github/scripts/clean-element-derived-data.sh
 
       - name: build-for-testing with ${{ inputs.cache_mode }} cache
-        env:
-          XCODECACHEPROG_TOKEN: ${{ secrets.XCODECACHEPROG_TOKEN }}
-        run: |
-          ./.github/scripts/run-element-cached-build.sh
-
-      - name: Remove local build state
-        run: ./.github/scripts/clean-element-derived-data.sh
-
-      - name: build-for-testing with ${{ inputs.cache_mode }} cache again
         env:
           XCODECACHEPROG_TOKEN: ${{ secrets.XCODECACHEPROG_TOKEN }}
         run: |
