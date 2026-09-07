@@ -87,21 +87,25 @@ jobs:
       - name: Validate cache setup
         run: ./.github/scripts/check-element-xcode-cache-setup.sh --cache-mode "$ELEMENT_CACHE_MODE"
 
-      - name: Build tests without cache
+      - name: Remove local build state
+        run: ./.github/scripts/clean-element-derived-data.sh
+
+      - name: build-for-testing without cache
         env:
           XCODE_XCCONFIG_FILE: ${{ github.workspace }}/.github/support/XcodeNoCache.xcconfig
         run: |
-          ./.github/scripts/clean-element-derived-data.sh
           ./.github/scripts/run-element-build-for-testing.sh
 
-      - name: Rebuild tests without cache after clean
+      - name: Remove local build state
+        run: ./.github/scripts/clean-element-derived-data.sh
+
+      - name: build-for-testing without cache
         env:
           XCODE_XCCONFIG_FILE: ${{ github.workspace }}/.github/support/XcodeNoCache.xcconfig
         run: |
-          ./.github/scripts/clean-element-derived-data.sh
           ./.github/scripts/run-element-build-for-testing.sh
 
-      - name: Test uncached build without building
+      - name: test-without-building without cache
         env:
           ELEMENT_RESULT_BUNDLE_PATH: ${{ runner.temp }}/element-${{ matrix.suite.scheme }}-xcodebuild.xcresult
         run: ./.github/scripts/run-element-test-without-building.sh
@@ -110,14 +114,16 @@ jobs:
         if: ${{ inputs.cache_mode == 'local' && inputs.clear_local_cache_dir }}
         run: ./.github/scripts/clean-element-xcode-cache.sh
 
-      - name: Build tests with cache
+      - name: Remove local build state
+        run: ./.github/scripts/clean-element-derived-data.sh
+
+      - name: build-for-testing with ${{ inputs.cache_mode }} cache
         env:
           XCODECACHEPROG_TOKEN: ${{ secrets.XCODECACHEPROG_TOKEN }}
         run: |
-          ./.github/scripts/clean-element-derived-data.sh
           ./.github/scripts/run-element-cached-build.sh
 
-      - name: Test cached build with xcodecacheprog
+      - name: "`xcodecacheprog test` with ${{ inputs.cache_mode }} cache"
         env:
           XCODECACHEPROG_TOKEN: ${{ secrets.XCODECACHEPROG_TOKEN }}
         run: ./.github/scripts/run-element-xcodecacheprog-test.sh --ignore-non-cacheable
