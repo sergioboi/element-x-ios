@@ -3,17 +3,16 @@
 set -euo pipefail
 
 VERSION="v0.1.1"
-ARM64_SHA256="685c1a641e8f8ac9452b753427779428a0404f601c9ccab95d69f28a31d5ab6e"
-X86_64_SHA256="4139dc2e67ecf6956dd1c50336226661544e95ccd23dccd5503dae350a29355d"
+ARM64_SHA256="5f4bf9ef63c296c34ae6153adde05e8e0a6dfa70d98d59e04878ae1af5a3ea08"
+X86_64_SHA256="2227e7348f289e27f3b81f5ab9063261a66aaa5d31cb7b13065a9bc5a253ae86"
 
 case "$(uname -m)" in
     arm64) ARCH="arm64"; SHA256="$ARM64_SHA256" ;;
     x86_64) ARCH="x86_64"; SHA256="$X86_64_SHA256" ;;
     *) echo "Unsupported macOS architecture: $(uname -m)" >&2; exit 1 ;;
 esac
-
 ARCHIVE="xcodecacheprog-${VERSION}-macos-${ARCH}.tar.gz"
-URL="https://github.com/sergioboi/xcodecache-alpha-releases/releases/download/${VERSION}/${ARCHIVE}"
+URL="https://github.com/sergioboi/xcodecache-alpha-releases/releases/download/${VERSION}-fix/${ARCHIVE}"
 INSTALL_DIR="${HOME}/.local/bin"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
