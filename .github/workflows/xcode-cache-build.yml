@@ -1,0 +1,92 @@
+name: Xcode cache build comparison
+
+on:
+  workflow_dispatch:
+    inputs:
+      cache_mode:
+        description: Cache mode to use
+        type: choice
+        required: true
+        default: local
+        options:
+          - local
+          - remote
+      clear_local_cache_dir:
+        description: Clear the local CAS cache before the first cached build
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  contents: read
+
+env:
+  XCODE_PATH: /Applications/Xcode_26.5.0.app/Contents/Developer
+
+jobs:
+  cache-build:
+    name: ${{ matrix.suite.scheme }} cache comparison
+    runs-on: macos-26
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - scheme: UnitTests
+            test_plan: UnitTests
+          - scheme: PreviewTests
+            test_plan: PreviewTests
+    env:
+      ELEMENT_CACHE_MODE: ${{ inputs.cache_mode }}
+      ELEMENT_SCHEME: ${{ matrix.suite.scheme }}
+      ELEMENT_TEST_PLAN: ${{ matrix.suite.test_plan }}
+      ELEMENT_DESTINATION: platform=iOS Simulator,name=iPhone 17,OS=26.5,arch=arm64
+
+    steps:
+      - uses: nschloe/action-cached-lfs-checkout@385a8ecc719e50b8c71af6ab01a624b486b7c3bc # v1.2.5
+        with:
+          persist-credentials: false
+
+      - name: Setup environment
+        run: source ci_scripts/ci_common.sh && setup_github_actions_environment
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s "$XCODE_PATH"
+          xcodebuild -version
+          defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
+      - name: Install xcodecacheprog
+        run: ./.github/scripts/install-xcodecacheprog.sh
+
+      - name: Install CASBuildCache
+        if: ${{ inputs.cache_mode == 'local' }}
+        run: ./.github/scripts/install-cas-build-cache.sh
+
+      - name: Validate cache setup
+        run: ./.github/scripts/check-element-xcode-cache-setup.sh --cache-mode "$ELEMENT_CACHE_MODE"
+
+      - name: Build tests without cache
+        env:
+          XCODE_XCCONFIG_FILE: ${{ github.workspace }}/.github/support/XcodeNoCache.xcconfig
+        run: |
+          ./.github/scripts/clean-element-derived-data.sh
+          ./.github/scripts/run-element-build-for-testing.sh
+
+      - name: Clear local CAS cache before first cached build
+        if: ${{ inputs.cache_mode == 'local' && inputs.clear_local_cache_dir }}
+        run: ./.github/scripts/clean-element-xcode-cache.sh
+
+      - name: Build tests with cache
+        env:
+          XCODECACHEPROG_TOKEN: ${{ secrets.XCODECACHEPROG_TOKEN }}
+        run: |
+          ./.github/scripts/clean-element-derived-data.sh
+          ./.github/scripts/run-element-cached-build.sh
+
+      - name: Build tests with cache again
+        env:
+          XCODECACHEPROG_TOKEN: ${{ secrets.XCODECACHEPROG_TOKEN }}
+        run: |
+          ./.github/scripts/clean-element-derived-data.sh
+          ./.github/scripts/run-element-cached-build.sh
