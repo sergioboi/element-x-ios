@@ -121,3 +121,14 @@ jobs:
         env:
           XCODECACHEPROG_TOKEN: ${{ secrets.XCODECACHEPROG_TOKEN }}
         run: ./.github/scripts/run-element-xcodecacheprog-test.sh --ignore-non-cacheable
+
+      - name: Upload xcodecacheprog test diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: xcodecacheprog-${{ matrix.suite.scheme }}-diagnostics
+          if-no-files-found: warn
+          path: |
+            ${{ github.workspace }}/xcodecacheprog-test-cache-keys.json
+            ${{ github.workspace }}/xcodecacheprog-test-graph.json
+            ${{ github.workspace }}/xcodecacheprog-test-graph-hashes.json
