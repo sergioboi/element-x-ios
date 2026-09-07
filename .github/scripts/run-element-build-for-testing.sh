@@ -21,9 +21,6 @@ xcodebuild \
     -skipMacroValidation \
     build-for-testing \
     COMPILER_INDEX_STORE_ENABLE=NO \
-    CODE_SIGN_IDENTITY= \
-    CODE_SIGNING_REQUIRED=NO \
-    CODE_SIGNING_ALLOWED=NO \
     "$@"
 
 echo "Generated XCTest run file:"
